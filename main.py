@@ -4,13 +4,8 @@ from operator import attrgetter
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from InquirerPy.separator import Separator
-from InquirerPy.validator import NumberValidator
-
-import os
-import psutil
-import speedtest
-import requests
-import pathlib
+from InquirerPy.validator import NumberValidator,PathValidator
+import os,psutil,speedtest,requests,pathlib,subprocess
 from pySmartDL import SmartDL
 
 # import server_fetcher as sf
@@ -65,7 +60,7 @@ def getminecraftversions():
 
 # def getfabricinstaller():
 
-def fabric_installer_wrapper(mcversion, dir):
+def fabric_installer_wrapper(mcversion, install_dir):
     # getfabricinstaller()
     if not pathlib.Path("fabric_installer.jar").is_file():
         # return
@@ -73,7 +68,7 @@ def fabric_installer_wrapper(mcversion, dir):
         obj = SmartDL(response.json()[0]["url"], "./fabric_installer.jar")
         obj.start()
 
-    os.system("java -jar fabric_installer.jar server -snapshot -downloadMinecraft -dir " + dir + " -mcversion " + mcversion)
+    os.system("java -jar fabric_installer.jar server -snapshot -downloadMinecraft -dir " + install_dir + " -mcversion " + mcversion)
 
 def make_server(name, version, eula, mem, slots):
     pathlib.Path(name).mkdir(parents=True, exist_ok=True)
@@ -91,6 +86,20 @@ def make_server(name, version, eula, mem, slots):
     server_properties = server_properties.replace("motd=A Minecraft Server", ("motd=" + name))
     server_properties = server_properties.replace("spawn-protection=16", "spawn-protection=0")
     open(os.path.join(name, "server.properties"), 'w+').write(server_properties)
+
+def load_properties(filepath):
+    sep = "="
+    comment_char="#"
+    props = {}
+    with open(filepath, "rt") as f:
+        for line in f:
+            l = line.strip()
+            if l and not l.startswith(comment_char):
+                key_value = l.split(sep)
+                key = key_value[0].strip()
+                value = sep.join(key_value[1:]).strip().strip('"') 
+                props[key] = value 
+    return props
     
 
 # Main code:
@@ -131,7 +140,7 @@ while True:
             Choice("make", name="Make a Minecraft server!"), 
             Separator(),
             Choice("configure", name="Configure a Minecraft server."), 
-            Choice("add", name="Add a Minecraft server.")
+            # Choice("add", name="Add a Minecraft server.")
         ]
     ).execute()
 
@@ -166,4 +175,62 @@ while True:
         ).execute()
 
         make_server(name=server_name, version=server_version, eula=server_eula, mem=server_mem, slots=server_slots)
+
+    if menu == "configure":
+        print("Minecraft (Fabric) server configuration wizard...")
+        config_menu = inquirer.select(
+            message="What do you want to configure?", 
+            choices=[
+                Choice("properties", name="Properties file."),
+                Separator(),
+                Choice("bash", name="Bash launch script (start.sh)."),
+                Choice("batch", name="Batch launch script (start.bat).")
+            ]
+        ).execute()
+
+        if config_menu == "properties":
+            properties_path = str(pathlib.Path().resolve())
+            while not properties_path.endswith("server.properties"):
+                properties_path = inquirer.filepath(
+                    message="Specify server.properties file location:",
+                    default=properties_path,
+                    validate=PathValidator(is_file=True, message="Not a file."),
+                    only_files=True
+                ).execute()
+            properties = load_properties(properties_path)
+            # properties_key = ""
+            while True:
+                properties_key = inquirer.fuzzy(
+                    message="Choose property to change (quit to exit):", 
+                    choices = [Choice(key) for key in properties]
+                )
+                if properties_key == "quit":
+                    break
+                properties[properties_key] = inquirer.text(
+                    message="Value for property " + properties_key + " :",
+                    choices = properties[properties_key]
+                )
+            # properties_key_lookups = [Choice(key) for key in properties]
+            
+
+        if config_menu == "bash":
+            properties_path = str(pathlib.Path().resolve())
+            while not properties_path.endswith(".sh"):
+                properties_path = inquirer.filepath(
+                    message="Specify start.sh file location:",
+                    default=properties_path,
+                    validate=PathValidator(is_file=True, message="Not a file."),
+                    only_files=True
+                ).execute()
+
+        if config_menu == "batch":
+            properties_path = str(pathlib.Path().resolve())
+            while not properties_path.endswith(".bat"):
+                properties_path = inquirer.filepath(
+                    message="Specify start.bat file location:",
+                    default=properties_path,
+                    validate=PathValidator(is_file=True, message="Not a file."),
+                    only_files=True
+                ).execute()
+
 
