@@ -119,9 +119,10 @@ def load_properties(filepath):
 
 
 def write_properties(filepath, props):
-    server_properties = ""
-    for key in props:
-        server_properties += "%s=%s\n" % (key, props[key])
+    server_properties = []
+    for key, value in props.items():
+        server_properties.append("%s=%s" % (key, value))
+    open(filepath, "w+").writelines(server_properties)
 
 
 # Main code:
