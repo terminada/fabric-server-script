@@ -20,6 +20,8 @@ Minecraft Server [setup](https://minecraft.gamepedia.com/Tutorials/Setting_up_a_
 
 For Windows download the `.exe` file from Releases
 
+#### Run from source
+
 ```shell
 git clone https://github.com/terminada/fabric-server-script.git
 cd fabric-server-script
@@ -29,6 +31,12 @@ python3 main.py
 ```
 
 __Note__: Using `python3` on Windows 8/10 may open the __Store__, in that case use `python`
+
+#### Build from source (Windows)
+
+```shell
+python -m PyInstaller main.py --noconfirm --name="fabric-server-script" --onefile
+```
 
 ## Dependencies
 Better check [requirements.txt](https://github.com/HoangTheBoss/fabric-server-script/blob/master/requirements.txt) for more updated contents

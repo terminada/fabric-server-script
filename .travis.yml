@@ -5,4 +5,4 @@ install:
   - pip install -r requirements.txt
 script:
   # - python makeserver.py -v release -e y -l y -m 4G --network 50 -s 0 -o y
-  - python -m PyInstaller main.py --noconfirm --icon=icon.ico --name="fabric-server-script" --onefile
+    - python -m PyInstaller main.py --noconfirm --name="fabric-server-script" --onefile
